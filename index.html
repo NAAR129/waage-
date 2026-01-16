@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Die Waage | Grundschul-Edition</title>
+
+<style>
+    :root {
+        --holz-dunkel: #8b4513;
+        --holz-hell: #cd853f;
+        --gras: #7cfc00;
+        --himmel: #e0f7fa;
+        --sonne: #ffce00;
+        --reset-rot: #ff7675;
+        --action-gelb: #fdcb6e;
+        --primary-blue: #0984e3;
+        --success-green: #00b894;
+    }
+
+    body { 
+        font-family: 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI', sans-serif; 
+        text-align: center; 
+        background: linear-gradient(to bottom, var(--himmel) 0%, #ffffff 100%);
+        margin: 0;
+        padding: 20px;
+        color: #333;
+    }
+
+    #start-screen {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: radial-gradient(circle at center, var(--sonne) 0%, #fab1a0 100%);
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        z-index: 100;
+    }
+
+    .start-card {
+        background: white; padding: 40px; border-radius: 40px;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.2); max-width: 500px;
+        border: 8px solid var(--primary-blue);
+    }
+
+    .mode-btn {
+        font-size: 24px; padding: 20px 40px; margin: 15px; cursor: pointer;
+        border: none; border-radius: 30px; 
+        background: var(--primary-blue); color: white;
+        box-shadow: 0 6px 0 #074b81;
+        transition: all 0.1s; width: 350px;
+        display: block;
+    }
+    .mode-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #074b81; }
+    .mode-btn.test-style { background: var(--success-green); box-shadow: 0 6px 0 #006b56; }
+
+    .waage-area {
+        height: 350px; display: flex; justify-content: center; align-items: flex-end;
+        position: relative; margin-bottom: 30px;
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><path d="M0 20 Q 50 10 100 20 L 100 20 L 0 20 Z" fill="%237cfc00"/></svg>') bottom no-repeat;
+        background-size: 100% 50px;
+    }
+
+    .stand { width: 24px; height: 200px; background: var(--holz-dunkel); border-radius: 12px 12px 0 0; position: relative; }
+
+    .balken {
+        position: absolute; width: 440px; height: 18px; background: var(--holz-hell);
+        border: 3px solid var(--holz-dunkel); border-radius: 10px;
+        top: 20px; left: -208px; transform-origin: center center;
+        transition: transform 0.8s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+        display: flex; justify-content: space-between; align-items: flex-start; z-index: 10;
+    }
+
+    .schale {
+        width: 170px; min-height: 90px; border: 4px solid var(--holz-dunkel);
+        border-top: none; border-radius: 0 0 85px 85px; background: rgba(255, 255, 255, 0.85);
+        margin-top: 15px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+        padding: 10px; transition: transform 0.8s;
+    }
+
+    .interface-box {
+        background: #fff; padding: 25px; border-radius: 30px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1); display: inline-block;
+        max-width: 850px; border: 4px solid #f0f0f0;
+    }
+
+    .btn-group { margin: 10px; padding: 15px; border: 3px dotted #dee2e6; border-radius: 20px; }
+    
+    .animal-btn {
+        font-size: 26px; padding: 12px; margin: 5px; cursor: pointer;
+        border: 2px solid #ddd; border-radius: 18px; background: #fff;
+        transition: background 0.2s, transform 0.1s; min-width: 70px;
+    }
+    .animal-btn:hover { background: #f8f9fa; transform: scale(1.05); }
+    .animal-btn small { font-size: 14px; color: #666; font-weight: bold; display: block; }
+    
+    .number-btn { font-weight: bold; color: #d35400; border-color: #f39c12; background: #fff8e1; width: 60px; }
+
+    .placed-number {
+        background: #ffd93d; padding: 6px 12px; border-radius: 10px;
+        margin: 3px; font-weight: bold; font-size: 22px; display: inline-block;
+        border: 2px solid #f1c40f;
+    }
+
+    .math-symbol {
+        font-size: 24px; font-weight: bold; color: #2c3e50; margin: 0 6px;
+        background: #ecf0f1; border-radius: 50%; width: 35px; height: 35px;
+        display: inline-flex; justify-content: center; align-items: center;
+    }
+
+    .emoji-item { font-size: 34px; margin: 3px; display: inline-flex; flex-direction: column; align-items: center; }
+    .emoji-item span { font-size: 12px; font-weight: bold; color: #444; margin-top: -2px; }
+
+    .hidden { display: none !important; }
+    .anzeige { font-size: 28px; margin: 20px; font-weight: bold; color: #2d3436; min-height: 80px; }
+    
+    .controls-row { margin-top: 15px; display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; }
+    .action-btn { width: auto !important; min-width: 200px; padding: 12px; font-size: 18px; border-radius: 20px;}
+    .level-up-btn { background: #a29bfe !important; color: white !important; }
+    .back-btn { background: #dfe6e9 !important; color: #2d3436 !important; }
+    .reset-stage-btn { background: var(--action-gelb) !important; color: #333 !important; }
+</style>
+</head>
+
+<body>
+
+<div id="start-screen">
+    <div class="start-card">
+        <h1 style="font-size: 56px; margin-top: 0;">⚖️ Die Waage</h1>
+        <p style="font-size: 24px;">Hallo! Was möchtest du heute machen?</p>
+        <button class="mode-btn" onclick="startGame('uebung')">💡 Freies Üben<br><small style="font-size: 14px; opacity:0.8">Entdecke das Gewicht</small></button>
+        <button class="mode-btn test-style" onclick="startGame('test')">🎯 Herausforderung<br><small style="font-size: 14px; opacity:0.8">Löse das Rätsel</small></button>
+    </div>
+</div>
+
+<h1 style="color: var(--primary-blue); font-size: 42px;">⚖️ Die Waage</h1>
+<div class="anzeige" id="anzeige">Wähle ein Element aus!</div>
+
+<div class="waage-area">
+    <div class="stand">
+        <div class="balken" id="balken">
+            <div class="schale" id="links"></div>
+            <div class="schale" id="rechts"></div>
+        </div>
+    </div>
+</div>
+
+<div class="interface-box">
+    
+    <div id="tier-interface" class="hidden">
+        <div style="display: flex; justify-content: center; flex-wrap: wrap;">
+            <div class="btn-group">
+                <strong>Links ⬅️</strong><br>
+                <button class="animal-btn" onclick="add('links','vogel')">🐦<small>1 kg</small></button>
+                <button class="animal-btn" onclick="add('links','schwein')">🐹<small>2 kg</small></button>
+                <button class="animal-btn" onclick="add('links','hase')">🐰<small>5 kg</small></button>
+                <button class="animal-btn" onclick="add('links','katze')">🐱<small>10 kg</small></button>
+                <button class="animal-btn" onclick="add('links','hund')">🐶<small>20 kg</small></button>
+            </div>
+            <div class="btn-group">
+                <strong>Rechts ➡️</strong><br>
+                <button class="animal-btn" onclick="add('rechts','vogel')">🐦<small>1 kg</small></button>
+                <button class="animal-btn" onclick="add('rechts','schwein')">🐹<small>2 kg</small></button>
+                <button class="animal-btn" onclick="add('rechts','hase')">🐰<small>5 kg</small></button>
+                <button class="animal-btn" onclick="add('rechts','katze')">🐱<small>10 kg</small></button>
+                <button class="animal-btn" onclick="add('rechts','hund')">🐶<small>20 kg</small></button>
+            </div>
+        </div>
+        <div class="controls-row">
+            <button class="mode-btn action-btn reset-stage-btn" onclick="clearWaage()">🧹 Waage leeren</button>
+        </div>
+        <div class="controls-row">
+            <button class="mode-btn action-btn level-up-btn" onclick="switchLevelToNumbers()">➡️ Stufe 2: Zahlen</button>
+        </div>
+    </div>
+
+    <div id="zahlen-interface" class="hidden">
+        <div style="display: flex; justify-content: center; flex-wrap: wrap;">
+            <div class="btn-group">
+                <strong>Links ⬅️</strong><br>
+                <button id="btn-L0" class="animal-btn number-btn" onclick="addNumber('links', 0)">?</button>
+                <button id="btn-L1" class="animal-btn number-btn" onclick="addNumber('links', 1)">?</button>
+                <button id="btn-L2" class="animal-btn number-btn" onclick="addNumber('links', 2)">?</button>
+                <button id="btn-L3" class="animal-btn number-btn" onclick="addNumber('links', 3)">?</button>
+                <button id="btn-L4" class="animal-btn number-btn" onclick="addNumber('links', 4)">?</button>
+            </div>
+            <div class="btn-group">
+                <strong>Rechts ➡️</strong><br>
+                <button id="btn-R0" class="animal-btn number-btn" onclick="addNumber('rechts', 0)">?</button>
+                <button id="btn-R1" class="animal-btn number-btn" onclick="addNumber('rechts', 1)">?</button>
+                <button id="btn-R2" class="animal-btn number-btn" onclick="addNumber('rechts', 2)">?</button>
+                <button id="btn-R3" class="animal-btn number-btn" onclick="addNumber('rechts', 3)">?</button>
+                <button id="btn-R4" class="animal-btn number-btn" onclick="addNumber('rechts', 4)">?</button>
+            </div>
+        </div>
+        <div class="controls-row">
+            <button class="mode-btn action-btn reset-stage-btn" onclick="clearWaage()">🧹 Waage leeren</button>
+            <button class="mode-btn action-btn reset-stage-btn" onclick="generateNumbers()">🔄 Neue Aufgabe</button>
+        </div>
+        <div class="controls-row">
+            <button class="mode-btn action-btn back-btn" onclick="switchLevelToAnimals()">⬅️ Zu Stufe 1</button>
+            <button class="mode-btn action-btn level-up-btn" onclick="switchLevelToMath()">➡️ Stufe 3: Rechnen</button>
+        </div>
+    </div>
+
+    <div id="rechen-interface" class="hidden">
+        <div style="display: flex; justify-content: center; flex-wrap: wrap;">
+            <div class="btn-group" style="background: #f8f9fa;">
+                <strong>Aufgabe (Links) 🔒</strong><br>
+                <p style="font-size: 14px; margin: 5px; color: #666;">Belegt</p>
+            </div>
+            <div class="btn-group">
+                <strong>Deine Lösung (Rechts) ➡️</strong><br>
+                <button id="math-0" class="animal-btn number-btn" onclick="addMathItem('number', 0)">?</button>
+                <button id="math-1" class="animal-btn number-btn" onclick="addMathItem('number', 1)">?</button>
+                <button id="math-2" class="animal-btn number-btn" onclick="addMathItem('number', 2)">?</button>
+                <button id="math-3" class="animal-btn number-btn" onclick="addMathItem('number', 3)">?</button>
+            </div>
+        </div>
+        <div class="controls-row">
+            <button class="mode-btn action-btn reset-stage-btn" onclick="clearWaage()">🧹 Waage leeren</button>
+            <button class="mode-btn action-btn reset-stage-btn" onclick="generateMathTask()">🎲 Neue Aufgabe</button>
+        </div>
+        <div class="controls-row">
+            <button class="mode-btn action-btn back-btn" onclick="switchLevelToNumbers()">⬅️ Zu Stufe 2</button>
+            </div>
+    </div>
+    
+    <div class="controls-row" style="margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; flex-direction: column; align-items: center;">
+        <button id="prufen-btn" class="mode-btn action-btn hidden" style="background: var(--success-green); color: white; margin-bottom: 10px;" onclick="runCheck()">🧐 Prüfen!</button>
+        <button class="mode-btn action-btn" style="background: var(--reset-rot); color: white;" onclick="resetGame()">🏠 Hauptmenü</button>
+    </div>
+</div>
+
+<script>
+let gewicht = { vogel: 1, schwein: 2, hase: 5, katze: 10, hund: 20 };
+let zahlenWerte = { links: [], rechts: [], rechenPool: [] };
+let linksGewicht = 0;
+let rechtsGewicht = 0;
+let aktuellerModus = "";
+let checkActive = false; 
+
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+function startGame(modus) {
+    aktuellerModus = modus;
+    document.getElementById("start-screen").classList.add("hidden");
+    if(modus === 'test') {
+        document.getElementById("prufen-btn").classList.remove("hidden");
+        switchLevelToMath();
+        toggleNavigation(false);
+    } else {
+        document.getElementById("tier-interface").classList.remove("hidden");
+        document.getElementById("anzeige").innerText = "Stufe 1: Lege Tiere auf die Waage!";
+        toggleNavigation(true);
+    }
+}
+
+function toggleNavigation(show) {
+    let levelBtns = document.getElementsByClassName("level-up-btn");
+    for(let btn of levelBtns) show ? btn.classList.remove("hidden") : btn.classList.add("hidden");
+    let backBtns = document.getElementsByClassName("back-btn");
+    for(let btn of backBtns) show ? btn.classList.remove("hidden") : btn.classList.add("hidden");
+}
+
+function clearWaage() {
+    checkActive = false; 
+    if (aktuellerModus === 'rechnen' || (aktuellerModus === 'test' && !document.getElementById("rechen-interface").classList.contains("hidden"))) {
+        rechtsGewicht = 0;
+        document.getElementById("rechts").innerHTML = "";
+    } else {
+        linksGewicht = 0; rechtsGewicht = 0;
+        document.getElementById("links").innerHTML = "";
+        document.getElementById("rechts").innerHTML = "";
+    }
+    updateWaage();
+}
+
+function switchInterface(id) {
+    document.getElementById("tier-interface").classList.add("hidden");
+    document.getElementById("zahlen-interface").classList.add("hidden");
+    document.getElementById("rechen-interface").classList.add("hidden");
+    document.getElementById(id).classList.remove("hidden");
+}
+
+function switchLevelToAnimals() {
+    aktuellerModus = "uebung";
+    clearWaage();
+    switchInterface("tier-interface");
+    document.getElementById("anzeige").innerText = "Stufe 1: Lege Tiere auf die Waage!";
+}
+
+function switchLevelToNumbers() {
+    aktuellerModus = "zahlen";
+    switchInterface("zahlen-interface");
+    document.getElementById("anzeige").innerText = "Stufe 2: Verteile die Zahlen geschickt!";
+    generateNumbers();
+}
+
+function switchLevelToMath() {
+    if(aktuellerModus !== 'test') aktuellerModus = "rechnen";
+    switchInterface("rechen-interface");
+    generateMathTask();
+}
+
+function generateNumbers() {
+    checkActive = false;
+    linksGewicht = 0; rechtsGewicht = 0;
+    document.getElementById("links").innerHTML = "";
+    document.getElementById("rechts").innerHTML = "";
+    let pool = Array.from({length: 25}, (_, i) => i + 1);
+    shuffle(pool);
+    zahlenWerte.links = []; zahlenWerte.rechts = [];
+    for(let i=0; i<5; i++) {
+        let valL = pool.pop();
+        zahlenWerte.links.push(valL);
+        document.getElementById("btn-L" + i).innerText = valL;
+        let valR = pool.pop();
+        zahlenWerte.rechts.push(valR);
+        document.getElementById("btn-R" + i).innerText = valR;
+    }
+    updateWaage();
+}
+
+function generateMathTask() {
+    checkActive = false;
+    linksGewicht = 0; rechtsGewicht = 0;
+    document.getElementById("links").innerHTML = "";
+    document.getElementById("rechts").innerHTML = "";
+    const poolZielsummen = [10, 12, 15, 16, 18, 20, 24, 25, 30];
+    let targetSum = poolZielsummen[Math.floor(Math.random() * poolZielsummen.length)];
+    let isAdditionTask = Math.random() > 0.5;
+    if (isAdditionTask) {
+        let p1 = Math.floor(Math.random() * (targetSum - 2)) + 1;
+        let p2 = targetSum - p1;
+        createPlacedItem("links", p1, "number");
+        createPlacedItem("links", "+", "symbol");
+        createPlacedItem("links", p2, "number");
+    } else {
+        createPlacedItem("links", targetSum, "number");
+    }
+    linksGewicht = targetSum;
+    let teilerSet = new Set();
+    for (let i = 1; i <= targetSum; i++) { if (targetSum % i === 0) teilerSet.add(i); }
+    let poolArray = Array.from(teilerSet);
+    while(poolArray.length < 4) {
+        let extra = Math.floor(Math.random() * 20) + 1;
+        if(!poolArray.includes(extra)) poolArray.push(extra);
+    }
+    shuffle(poolArray);
+    zahlenWerte.rechenPool = poolArray.slice(0, 4);
+    for(let i=0; i<4; i++) { document.getElementById("math-" + i).innerText = zahlenWerte.rechenPool[i]; }
+    updateWaage();
+}
+
+function addNumber(seite, index) {
+    checkActive = false;
+    let wert = (seite === 'links') ? zahlenWerte.links[index] : zahlenWerte.rechts[index];
+    createPlacedItem(seite, wert, "number");
+    if(seite === 'links') linksGewicht += wert; else rechtsGewicht += wert;
+    updateWaage();
+}
+
+function addMathItem(type, index) {
+    checkActive = false;
+    if (type === 'number') {
+        const schaleRechts = document.getElementById("rechts");
+        if (schaleRechts.children.length > 0) { createPlacedItem("rechts", "+", "symbol"); }
+        let wert = zahlenWerte.rechenPool[index];
+        createPlacedItem("rechts", wert, "number");
+        rechtsGewicht += wert;
+        updateWaage();
+    }
+}
+
+function add(seite, tier) {
+    checkActive = false;
+    const emojiMap = { vogel: "🐦", schwein: "🐹", hase: "🐰", katze: "🐱", hund: "🐶" };
+    const container = document.createElement("div");
+    container.className = "emoji-item";
+    container.innerHTML = `${emojiMap[tier]} <span>${gewicht[tier]} kg</span>`;
+    if (seite === "links") { linksGewicht += gewicht[tier]; document.getElementById("links").appendChild(container); }
+    else { rechtsGewicht += gewicht[tier]; document.getElementById("rechts").appendChild(container); }
+    updateWaage();
+}
+
+function createPlacedItem(seite, inhalt, typ) {
+    let div = document.createElement("div");
+    div.className = (typ === "symbol") ? "math-symbol" : "placed-number";
+    div.innerText = inhalt;
+    document.getElementById(seite).appendChild(div);
+}
+
+function runCheck() { checkActive = true; updateWaage(); }
+
+function updateWaage() {
+    let balken = document.getElementById("balken");
+    let anzeige = document.getElementById("anzeige");
+    let diff = rechtsGewicht - linksGewicht;
+    let winkel = 0;
+    if (aktuellerModus !== 'test' || checkActive) { winkel = Math.max(-22, Math.min(22, diff / 4)); }
+    balken.style.transform = `rotate(${winkel}deg)`;
+    document.getElementById("links").style.transform = `rotate(${-winkel}deg)`;
+    document.getElementById("rechts").style.transform = `rotate(${-winkel}deg)`;
+    if (aktuellerModus === 'test' && !checkActive) {
+        anzeige.innerHTML = "Löse die Aufgabe und klicke auf Prüfen!";
+        anzeige.style.color = "#333";
+        return;
+    }
+    let textStr = ""; let relationStr = ""; let color = "#333";
+    if (linksGewicht === 0 && rechtsGewicht === 0) { textStr = "Die Waage ist bereit."; }
+    else {
+        if (diff === 0) { textStr = "🌟 Gleichgewicht! Toll gemacht! 🌟"; relationStr = `${linksGewicht} = ${rechtsGewicht}`; color = "#27ae60"; }
+        else if (diff < 0) { textStr = "⬅️ Die linke Seite ist schwerer"; relationStr = `${linksGewicht} > ${rechtsGewicht}`; color = "#d35400"; }
+        else { textStr = "➡️ Die rechte Seite ist schwerer"; relationStr = `${linksGewicht} < ${rechtsGewicht}`; color = "#2980b9"; }
+    }
+    anzeige.innerHTML = `<span>${textStr}</span>` + (relationStr ? `<br><span style="font-size: 24px; opacity: 0.8;">${relationStr}</span>` : "");
+    anzeige.style.color = color;
+}
+
+function resetGame() {
+    checkActive = false; aktuellerModus = "";
+    linksGewicht = 0; rechtsGewicht = 0;
+    document.getElementById("links").innerHTML = "";
+    document.getElementById("rechts").innerHTML = "";
+    updateWaage();
+    switchInterface("tier-interface");
+    document.getElementById("prufen-btn").classList.add("hidden");
+    document.getElementById("start-screen").classList.remove("hidden");
+}
+</script>
+
+</body>
+</html>
+
